@@ -63,7 +63,7 @@ namespace OrganizeFundamental
 			services.AddMvc();
 
 			// Add application services.
-			services.AddSingleton<IDbContextFactory<ApplicationDbContext>, ApplicationDbContextFactory>(o => new ApplicationDbContextFactory(connectionString));
+			services.AddSingleton(o => new ApplicationDbContextFactory(connectionString));
 			services.AddTransient<IEmailSender, MessageServices>();
 			services.AddTransient<ISmsSender, MessageServices>();
 		}
