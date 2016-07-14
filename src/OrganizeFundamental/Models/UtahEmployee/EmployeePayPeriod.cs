@@ -13,15 +13,15 @@ namespace OrganizeFundamental.Models.UtahEmployee
 		[Required]
 		public int YearRank { get; set; }
 
-		[Required]
+		[Required, DataType(DataType.Date)]
 		public DateTime StartDate { get; set; }
 
 
-		[Required]
+		[Required, DataType(DataType.Date)]
 		public DateTime EndDate { get; set; }
 
 
-		[Required]
+		[Required, DataType(DataType.Date)]
 		public DateTime CheckDate { get; set; }
 	}
 }

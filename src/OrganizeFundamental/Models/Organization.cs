@@ -9,11 +9,11 @@ namespace OrganizeFundamental.Models
 		[Key]
 		public int ID { get; set; }
 
-		[ForeignKey("Parent")]
-		public int ParentID { get; set; }
-		[InverseProperty("Children")]
+		[ForeignKey(nameof(Parent))]
+		public int? ParentOrganizationID { get; set; }
+		[InverseProperty(nameof(Children))]
 		public virtual Organization Parent { get; set; }
-		public virtual IList<Organization> Children { get; set; }
+		public virtual List<Organization> Children { get; set; }
 
 		[Required, StringLength(50)]
 		public string Label { get; set; }
