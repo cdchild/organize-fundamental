@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace OrganizeFundamental.Models.UtahEmployee
 {
+	[NotMapped]
 	[Table("WorkTimeCardEntries", Schema = "UtahEmployee")]
 	public class WorkTimeCardEntry
 	{

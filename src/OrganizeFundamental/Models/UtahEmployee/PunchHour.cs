@@ -25,7 +25,7 @@ namespace OrganizeFundamental.Models.UtahEmployee
 		public bool? HasPotentialError { get; set; }
 		public int? HoursTally { get; set; }
 		public int? MinutesTally { get; set; }
-		public float ActualHours { get; set; }
-		public float RoundedHours { get; set; }
+		public double ActualHours { get; set; }
+		public double RoundedHours { get; set; }
 	}
 }

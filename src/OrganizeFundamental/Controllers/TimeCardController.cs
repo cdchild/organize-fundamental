@@ -3,21 +3,21 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace OrganizeFundamental.Controllers
 {
-	[Route("Person/{personID:int}/TimeCard")]
 	public class TimeCardController : Controller
 	{
-		readonly ApplicationDbContextFactory _applicationDbContextFactory;
+		readonly ApplicationDbContextFactory _dbContextFactory;
 		public TimeCardController(ApplicationDbContextFactory dbContextFactory)
 		{
-			_applicationDbContextFactory = dbContextFactory;
+			_dbContextFactory = dbContextFactory;
 		}
 		// GET: TimeCard
 		public async Task<ActionResult> Index(int personID, int? payPeriodID = null)
 		{
-			var db = _applicationDbContextFactory.Create();
+			var db = _dbContextFactory.Create();
 
 			var payPeriodsTask = db
 				.ViewPayPeriods
@@ -25,87 +25,80 @@ namespace OrganizeFundamental.Controllers
 
 			if (!payPeriodID.HasValue)
 			{
-				if(db.ViewPayPeriods.Any())
+				if(await db.ViewPayPeriods.AnyAsync())
 				{
 					payPeriodID = await db.ViewPayPeriods.OrderByDescending(pp => pp.IsCurrent).ThenByDescending(pp => pp.StartDate).Select(pp => pp.ID).FirstAsync();
 				}
 				else
 				{
 					//No pay periods setup
-					//TODO something that will return a view with message and link to setup pay periods
-					//return View("");
+					return View("NeedPayPeriods");
 				}
 			}
 
-			var timeCardDaysTask = db
-				.PunchHours
-				.Where(h =>
-					h.PersonID == personID
-					&& payPeriodID.HasValue && h.PayPeriodID == payPeriodID.Value)
-				.GroupBy(h =>
-					new
+			var timeCardDaysTask = (
+				from h in db.PunchHours
+				where h.PersonID == personID
+				where payPeriodID.HasValue && h.PayPeriodID == payPeriodID.Value
+				where h.Date.HasValue
+				group h by new
 					{
-						h.Date,
+						Date = h.Date.Value,
 						h.PayPeriodID,
 						h.PersonID,
+					} into d
+
+				join ip in (
+					from tce in db.WorkTimeCardEntries
+					join p in db.PunchPairs on tce.StampID equals p.StampID
+					select new
+					{
+						p.DayPunchNum,
+						tce.IsConsideredWorking,
+						IsFirstInPunch = p.IsFirstInPunch ?? false,
+						tce.IsLunch,
+						IsOddPunch = p.IsOddPunch ?? false,
+						HasPotentialError = p.HasPotentialError ?? false,
+						p.NextStamp,
+						tce.PayPeriodID,
+						tce.PersonID,
+						tce.StampID,
+						tce.Stamp,
+						p.TotalMinutesDifference
 					})
-				.GroupJoin(db
-					.WorkTimeCardEntries
-					.Join(
-						db.PunchPairs,
-						tce => tce.StampID,
-						p => p.StampID,
-						(tce, p) =>
+					on d.Key equals new { Date = ip.Stamp.Date, ip.PayPeriodID, ip.PersonID }
+					into pp
+				select new
+					{
+						d.Key.Date,
+						d.Key.PayPeriodID,
+						d.Key.PersonID,
+						AggregatedHours = d.Select(h =>
 							new
 							{
-								p.DayPunchNum,
-								tce.IsConsideredWorking,
-								IsFirstInPunch = p.IsFirstInPunch ?? false,
-								tce.IsLunch,
-								IsOddPunch = p.IsOddPunch ?? false,
-								HasPotentialError = p.HasPotentialError ?? false,
-								p.NextStamp,
-								tce.PayPeriodID,
-								tce.PersonID,
-								tce.StampID,
-								tce.Stamp,
-								p.TotalMinutesDifference
+								h.ActualHours,
+								h.HasPotentialError,
+								h.HoursTally,
+								h.IsConsideredWorking,
+								h.IsLunch,
+								h.MinutesTally,
+								h.RoundedHours
 							}),
-					d => new { d.Key.Date, d.Key.PersonID, d.Key.PayPeriodID },
-					p => new { Date = p.Stamp.Date, p.PersonID, p.PayPeriodID },
-					(d, p) =>
-						new
-						{
-							d.Key.Date,
-							d.Key.PayPeriodID,
-							d.Key.PersonID,
-							AggregatedHours = d.Select(h =>
-								new
-								{
-									h.ActualHours,
-									h.HasPotentialError,
-									h.HoursTally,
-									h.IsConsideredWorking,
-									h.IsLunch,
-									h.MinutesTally,
-									h.RoundedHours
-								}),
-							Punches = p.Select(pr =>
-								new
-								{
-									pr.DayPunchNum,
-									pr.HasPotentialError,
-									pr.IsConsideredWorking,
-									pr.IsFirstInPunch,
-									pr.IsLunch,
-									pr.IsOddPunch,
-									pr.NextStamp,
-									pr.Stamp,
-									pr.StampID,
-									pr.TotalMinutesDifference
-								})
-						}
-					)
+						Punches = pp.Select(pr =>
+							new
+							{
+								pr.DayPunchNum,
+								pr.HasPotentialError,
+								pr.IsConsideredWorking,
+								pr.IsFirstInPunch,
+								pr.IsLunch,
+								pr.IsOddPunch,
+								pr.NextStamp,
+								pr.Stamp,
+								pr.StampID,
+								pr.TotalMinutesDifference
+							})
+					})
 				.ToListAsync();
 
 			var payPeriods = await payPeriodsTask;
@@ -122,11 +115,41 @@ namespace OrganizeFundamental.Controllers
 
 			//build the time card using payperiod metadata
 			var payPeriod = payPeriods.First(pp => pp.ID == payPeriodID.Value);
-			
 
 			var timeCardDays = await timeCardDaysTask;
 
 			return View();
+		}
+
+		public async Task<IActionResult> GetTimeCardPrintOut(int id, int ein, int days)
+		{
+			var personID = id;
+
+			var date = System.DateTime.Today.AddDays(days);
+
+			using (var db = _dbContextFactory.Create())
+			{
+				var personTask = _dbContextFactory.Create().Persons.SingleOrDefaultAsync(p => p.ID == personID);
+
+				var payPeriodTask = _dbContextFactory.Create().EmployeePayPeriods.SingleOrDefaultAsync(pp => pp.StartDate <= date && date <= pp.EndDate);
+
+				var hoursTask = (
+					from h in db.PunchHours
+					where h.PersonID == personID
+					where h.StartDate <= date
+					where date <= h.EndDate
+					where h.Date.HasValue
+					where h.IsConsideredWorking
+					group h by h.Date.Value into d
+					select d)
+					.ToListAsync();
+
+				ViewData["Person"] = await personTask;
+				ViewData["PayPeriod"] = await payPeriodTask;
+				ViewData["EIN"] = ein;
+
+				return View(await hoursTask);
+			}
 		}
 	}
 }

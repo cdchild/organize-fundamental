@@ -28,8 +28,8 @@ namespace OrganizeFundamental.Models.UtahEmployee
 		[Key]
 		public int HourID { get; set; }
 		public DateTime Date { get; set; }
-		public float Hours { get; set; }
-		public float? Balance { get; set; }
+		public double Hours { get; set; }
+		public double? Balance { get; set; }
 
 	}
 }
