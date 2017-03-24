@@ -1,16 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.9
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{E1FEF50F-90D8-4BA5-BED6-1C15BC56715B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{55693C0A-24EC-449A-9703-D4A063E5FF2D}"
-	ProjectSection(SolutionItems) = preProject
-		global.json = global.json
-	EndProjectSection
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "OrganizeFundamental", "src\OrganizeFundamental\OrganizeFundamental.xproj", "{EB0DF61D-1198-4F41-987F-02B6F18DAD98}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OrganizeFundamental", "src\OrganizeFundamental\OrganizeFundamental.csproj", "{EB0DF61D-1198-4F41-987F-02B6F18DAD98}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
