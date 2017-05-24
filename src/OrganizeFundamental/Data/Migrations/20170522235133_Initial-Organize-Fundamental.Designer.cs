@@ -8,9 +8,10 @@ using OrganizeFundamental.Models;
 namespace OrganizeFundamental.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20170522235133_Initial-Organize-Fundamental")]
+    partial class InitialOrganizeFundamental
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
             modelBuilder
                 .HasAnnotation("ProductVersion", "1.0.3")

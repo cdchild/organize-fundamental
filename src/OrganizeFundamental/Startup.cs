@@ -22,9 +22,6 @@ namespace OrganizeFundamental
 
 			if (env.IsDevelopment())
 			{
-				// For more details on using the user secret store see http://go.microsoft.com/fwlink/?LinkID=532709
-				builder.AddUserSecrets();
-
 				// This will push telemetry data through Application Insights pipeline faster, allowing you to view results immediately.
 				builder.AddApplicationInsightsSettings(developerMode: true);
 			}
@@ -42,37 +39,33 @@ namespace OrganizeFundamental
 			// Add framework services.
 			services.AddApplicationInsightsTelemetry(Configuration);
 
-			services.AddDbContext<ApplicationDbContext>(options =>
-				options.UseSqlServer(connectionString));
+			// Add application services.
+			services.AddSingleton(p => new ApplicationDbContextFactory(connectionString));
+			services.AddSingleton(o => o.GetService<ApplicationDbContextFactory>().Create());
+			services.AddTransient<IEmailSender, MessageServices>();
+			services.AddTransient<ISmsSender, MessageServices>();
 
 			services.AddIdentity<ApplicationUser, IdentityRole>(config =>
-				{
-					config.Cookies.ApplicationCookie.LoginPath = "/Account/Login";
+			{
+				config.Cookies.ApplicationCookie.LoginPath = "/Account/Login";
 
-					config.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-.";
-					config.User.RequireUniqueEmail = false;
+				config.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-.";
+				config.User.RequireUniqueEmail = false;
 
-					config.Password.RequireDigit = true;
-					config.Password.RequiredLength = 12;
-					config.Password.RequireLowercase = true;
-					config.Password.RequireNonAlphanumeric = false;
-					config.Password.RequireUppercase = true;
-				})
+				config.Password.RequireDigit = true;
+				config.Password.RequiredLength = 12;
+				config.Password.RequireLowercase = true;
+				config.Password.RequireNonAlphanumeric = false;
+				config.Password.RequireUppercase = true;
+			})
 				.AddEntityFrameworkStores<ApplicationDbContext>();
 
 			services.AddMvc();
-
-			// Add application services.
-			services.AddSingleton(o => new ApplicationDbContextFactory(connectionString));
-			services.AddTransient<IEmailSender, MessageServices>();
-			services.AddTransient<ISmsSender, MessageServices>();
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
 		public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, ApplicationDbContextFactory dbContextFactory)
 		{
-			bool isDatabaseConsideredCreated;
-
 			loggerFactory.AddConsole(Configuration.GetSection("Logging"));
 			loggerFactory.AddDebug(LogLevel.Warning);
 
@@ -84,17 +77,6 @@ namespace OrganizeFundamental
 				app.UseDatabaseErrorPage();
 				app.UseDeveloperExceptionPage();
 
-				try
-				{
-					using (var db = dbContextFactory.Create())
-					{
-						isDatabaseConsideredCreated = db.Database.EnsureCreated();
-					}
-				}
-				catch (System.Exception ex)
-				{
-					throw new System.Exception("Database Context Error", ex);
-				}
 			}
 			else
 			{

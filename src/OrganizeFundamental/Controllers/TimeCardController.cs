@@ -48,25 +48,8 @@ namespace OrganizeFundamental.Controllers
 						h.PersonID,
 					} into d
 
-				join ip in (
-					from tce in db.WorkTimeCardEntries
-					join p in db.PunchPairs on tce.StampID equals p.StampID
-					select new
-					{
-						p.DayPunchNum,
-						tce.IsConsideredWorking,
-						IsFirstInPunch = p.IsFirstInPunch ?? false,
-						tce.IsLunch,
-						IsOddPunch = p.IsOddPunch ?? false,
-						HasPotentialError = p.HasPotentialError ?? false,
-						p.NextStamp,
-						tce.PayPeriodID,
-						tce.PersonID,
-						tce.StampID,
-						tce.Stamp,
-						p.TotalMinutesDifference
-					})
-					on d.Key equals new { Date = ip.Stamp.Date, ip.PayPeriodID, ip.PersonID }
+				join tce in db.WorkTimeCardEntries
+					on d.Key equals new { Date = tce.Stamp.Date, tce.PayPeriodID, tce.PersonID }
 					into pp
 				select new
 					{
@@ -87,16 +70,10 @@ namespace OrganizeFundamental.Controllers
 						Punches = pp.Select(pr =>
 							new
 							{
-								pr.DayPunchNum,
-								pr.HasPotentialError,
 								pr.IsConsideredWorking,
-								pr.IsFirstInPunch,
 								pr.IsLunch,
-								pr.IsOddPunch,
-								pr.NextStamp,
 								pr.Stamp,
-								pr.StampID,
-								pr.TotalMinutesDifference
+								pr.StampID
 							})
 					})
 				.ToListAsync();
