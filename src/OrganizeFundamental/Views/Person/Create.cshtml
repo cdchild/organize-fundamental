@@ -1,42 +1,56 @@
-@model OrganizeFundamental.Models.Person
+@model Person
 
 @{
-    ViewData["Title"] = "Create";
+	var isCreating = (bool?)ViewData["IsCreating"] ?? false;
+	var title = isCreating ? "Create" : "Edit";
+	var suffix = "Person";
+	ViewData["Title"] = title + " " + suffix;
 }
 
-<h2>Create</h2>
+<h2>
+	@title
+	<small>@suffix</small>
+</h2>
 
-<form asp-action="Create">
-    <div class="form-horizontal">
-        <h4>Person</h4>
-        <hr />
-        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-        <div class="form-group">
-            <label asp-for="FirstName" class="col-md-2 control-label"></label>
-            <div class="col-md-10">
-                <input asp-for="FirstName" class="form-control" />
-                <span asp-validation-for="FirstName" class="text-danger" />
-            </div>
-        </div>
-        <div class="form-group">
-            <label asp-for="LastName" class="col-md-2 control-label"></label>
-            <div class="col-md-10">
-                <input asp-for="LastName" class="form-control" />
-                <span asp-validation-for="LastName" class="text-danger" />
-            </div>
-        </div>
-        <div class="form-group">
-            <div class="col-md-offset-2 col-md-10">
-                <input type="submit" value="Create" class="btn btn-default" />
-            </div>
-        </div>
-    </div>
+<form asp-action="@title">
+	<div class="row">
+		<div class="col-lg-8">
+			<div class="panel panel-default">
+				<div class="panel-body">
+					<div class="form-horizontal">
+						<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+						@if (!isCreating)
+						{
+							<input type="hidden" asp-for="ID" />
+						}
+						<div class="form-group">
+							<label asp-for="FirstName" class="col-md-2 control-label"></label>
+							<div class="col-md-10">
+								<input asp-for="FirstName" class="form-control" />
+								<span asp-validation-for="FirstName" class="text-danger"></span>
+							</div>
+						</div>
+						<div class="form-group">
+							<label asp-for="LastName" class="col-md-2 control-label"></label>
+							<div class="col-md-10">
+								<input asp-for="LastName" class="form-control" />
+								<span asp-validation-for="LastName" class="text-danger"></span>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="panel-footer">
+					<input type="submit" value="Save" class="btn btn-default" />
+				</div>
+			</div>
+		</div>
+	</div>
 </form>
 
 <div>
-    <a asp-action="Index">Back to List</a>
+	<a asp-action="Index" title="Back to List" class="btn btn-default"><span class="glyphicon glyphicon-th-list"></span></a>
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+	@{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }

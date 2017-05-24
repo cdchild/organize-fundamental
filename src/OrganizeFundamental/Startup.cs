@@ -37,7 +37,7 @@ namespace OrganizeFundamental
 		{
 			var connectionString = Configuration.GetConnectionString("DefaultConnection");
 			// Add framework services.
-			services.AddApplicationInsightsTelemetry(Configuration);
+			//services.AddApplicationInsightsTelemetry(Configuration);
 
 			// Add application services.
 			services.AddSingleton(p => new ApplicationDbContextFactory(connectionString));
@@ -69,8 +69,6 @@ namespace OrganizeFundamental
 			loggerFactory.AddConsole(Configuration.GetSection("Logging"));
 			loggerFactory.AddDebug(LogLevel.Warning);
 
-			app.UseApplicationInsightsRequestTelemetry();
-
 			if (env.IsDevelopment())
 			{
 				app.UseBrowserLink();
@@ -82,8 +80,6 @@ namespace OrganizeFundamental
 			{
 				app.UseExceptionHandler("/Home/Error");
 			}
-
-			app.UseApplicationInsightsExceptionTelemetry();
 
 			app.UseStaticFiles();
 

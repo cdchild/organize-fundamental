@@ -21,26 +21,11 @@ namespace OrganizeFundamental.Controllers
 			return View(await _context.Persons.ToListAsync());
 		}
 
-		// GET: Person/Details/5
-		public async Task<IActionResult> Details(int? id)
-		{
-			if (id == null)
-			{
-				return NotFound();
-			}
-
-			var person = await _context.Persons.SingleOrDefaultAsync(m => m.ID == id);
-			if (person == null)
-			{
-				return NotFound();
-			}
-
-			return View(person);
-		}
-
 		// GET: Person/Create
 		public IActionResult Create()
 		{
+			ViewData["IsCreating"] = true;
+
 			return View();
 		}
 
@@ -57,6 +42,9 @@ namespace OrganizeFundamental.Controllers
 				await _context.SaveChangesAsync();
 				return RedirectToAction("Index");
 			}
+
+			ViewData["IsCreating"] = true;
+
 			return View(person);
 		}
 
@@ -73,7 +61,8 @@ namespace OrganizeFundamental.Controllers
 			{
 				return NotFound();
 			}
-			return View(person);
+
+			return View("Create", person);
 		}
 
 		// POST: Person/Edit/5
@@ -108,7 +97,8 @@ namespace OrganizeFundamental.Controllers
 				}
 				return RedirectToAction("Index");
 			}
-			return View(person);
+
+			return View("Create", person);
 		}
 
 		// GET: Person/Delete/5
