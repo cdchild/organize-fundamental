@@ -38,8 +38,6 @@ namespace OrganizeFundamental.Models
 
 		public DbSet<UtahEmployee.PunchHour> PunchHours { get; set; }
 
-		public DbSet<UtahEmployee.PunchPair> PunchPairs { get; set; }
-
 		public DbSet<Organization> Organizations { get; set; }
 
 		public DbSet<Scripture.Verse> Verses { get;  set; }

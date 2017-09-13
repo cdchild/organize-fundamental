@@ -18,9 +18,9 @@ namespace OrganizeFundamental.Models.UtahEmployee
 		public DateTime Date { get; set; }
 
 		[Required]
-		public float Hours { get; set; }
+		public double Hours { get; set; }
 
-		public bool IsHoliday { get; set; }
+		//public bool IsHoliday { get; set; }
 
 		public int? AccrualID { get; set; }
 

@@ -8,6 +8,10 @@ namespace OrganizeFundamental.Controllers
 		{
 			return View();
 		}
+		public IActionResult System()
+		{
+			return View();
+		}
 
 		public IActionResult Error()
 		{

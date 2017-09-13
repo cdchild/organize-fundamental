@@ -14,7 +14,7 @@ namespace OrganizeFundamental.Models.UtahEmployee
 		public virtual Person Person { get; set; }
 
 		[Required, ForeignKey(nameof(AccrualType))]
-		public int AccrualTypeID { get; set; }
+		public byte AccrualTypeID { get; set; }
 		[InverseProperty(nameof(UtahEmployee.AccrualType.Accruals))]
 		public virtual AccrualType AccrualType { get; set; }
 	}

@@ -8,9 +8,10 @@ using OrganizeFundamental.Models;
 namespace OrganizeFundamental.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20170523230204_AddSQLViews")]
+    partial class AddSQLViews
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
             modelBuilder
                 .HasAnnotation("ProductVersion", "1.0.3")
@@ -459,6 +460,56 @@ namespace OrganizeFundamental.Data.Migrations
                     b.HasKey("PersonID", "PayPeriodID", "Date", "IsConsideredWorking", "IsLunch", "ActualHours");
 
                     b.ToTable("PunchHours","UtahEmployee");
+                });
+
+            modelBuilder.Entity("OrganizeFundamental.Models.UtahEmployee.PunchPair", b =>
+                {
+                    b.Property<int>("StampID")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<DateTime>("CheckDate");
+
+                    b.Property<int?>("DayPunchNum");
+
+                    b.Property<DateTime>("EndDate");
+
+                    b.Property<string>("FirstName");
+
+                    b.Property<bool?>("HasPotentialError");
+
+                    b.Property<bool>("IsConsideredWorking");
+
+                    b.Property<bool?>("IsCurrentPayPeriod");
+
+                    b.Property<bool?>("IsFirstInPunch");
+
+                    b.Property<bool?>("IsFuturePayPeriod");
+
+                    b.Property<bool>("IsLunch");
+
+                    b.Property<bool?>("IsOddPunch");
+
+                    b.Property<bool?>("IsPastPayPeriod");
+
+                    b.Property<string>("LastName");
+
+                    b.Property<DateTime?>("NextStamp");
+
+                    b.Property<int>("PayPeriodID");
+
+                    b.Property<int>("PersonID");
+
+                    b.Property<DateTime>("Stamp");
+
+                    b.Property<DateTime>("StartDate");
+
+                    b.Property<int?>("TotalMinutesDifference");
+
+                    b.Property<int>("YearRank");
+
+                    b.HasKey("StampID");
+
+                    b.ToTable("PunchPairs","UtahEmployee");
                 });
 
             modelBuilder.Entity("OrganizeFundamental.Models.UtahEmployee.ViewPayPeriod", b =>
