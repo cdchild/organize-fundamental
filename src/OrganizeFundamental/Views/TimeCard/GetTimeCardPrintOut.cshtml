@@ -1,0 +1,545 @@
+﻿@model List<IGrouping<DateTime, OrganizeFundamental.Models.UtahEmployee.PunchHour>>
+@{
+	ViewData["Title"] = "Time Card";
+	Layout = null;
+
+	var person = (Person)ViewData["Person"];
+	var payperiod = (OrganizeFundamental.Models.UtahEmployee.EmployeePayPeriod)ViewData["PayPeriod"] ?? new OrganizeFundamental.Models.UtahEmployee.EmployeePayPeriod { };
+	var payperiodspan = payperiod.EndDate - payperiod.StartDate;
+	var ein = (int)ViewData["EIN"];
+	var lastDayOfWorkWeek = DayOfWeek.Friday;
+
+	var commonCodes = new Dictionary<char, string>();
+	commonCodes.Add('A', "Annual");
+	commonCodes.Add('S', "Sick");
+	commonCodes.Add('C', "Comp");
+	commonCodes.Add('X', "Excess");
+	commonCodes.Add('V', "CV Sick");
+
+	var otherCodes = new List<string>();
+	otherCodes.Add("FD Code");
+	otherCodes.Add("OnCall Hrs");
+	otherCodes.Add("Shift Code");
+	otherCodes.Add("Approval");
+}
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Time Sheet Print Out</title>
+	<style>
+		#body-content {
+			width: 945px;
+		}
+
+		h1 {
+			margin-right: auto;
+			margin-left: auto;
+			margin-bottom: 0px;
+			text-align: center;
+		}
+
+		h2, h3 {
+			display: inline-block;
+		}
+
+		h1, h2 {
+			font-size: 1.25em;
+			font-weight: 500;
+		}
+
+		h3 {
+			font-weight: 400;
+			font-size: .9em;
+		}
+
+		.shade {
+			background-color: rgba(0,0,0,.10);
+		}
+
+		table {
+			width: 100%;
+		}
+
+		th {
+			font-weight: normal;
+		}
+
+		table#head {
+			margin-top: -16px;
+		}
+
+		table#head td {
+			
+		}
+
+		table#head h2, table#head h3 {
+			margin: 4px 10px;
+		}
+
+		table#main {
+			border: 1px solid #000;
+			border-spacing: 0px;
+			font-size: .75em;
+		}
+
+		table#main th, table#main td {
+			border: 1px solid #000;
+			height: 2.00em;
+			padding: 0;
+		}
+
+		table#main th {
+			vertical-align: top;
+			height: 2.25em !important;
+		}
+		table#main th:not(:first-child) {
+			font-size: .85em;
+		}
+
+		table#main th.eqWidth {
+			width: 48px;
+		}
+		table#main th div {
+			width: 100%;
+		}
+		table#main td {
+			text-align: center;
+		}
+		table#main td:first-child {
+			vertical-align: top;
+		}
+
+		.week-total-all {
+			border-width: 2px !important;
+		}
+		td#approval {
+			width: 74%;
+		}
+
+		.week-total-sides {
+			border-left-width: 2px !important;
+			border-right-width: 2px !important;
+		}
+
+		.week-total-top-bottom {
+			border-top-width: 2px !important;
+			border-bottom-width: 2px !important;
+		}
+
+		.week-total-top-bottom-left {
+			border-top-width: 2px !important;
+			border-bottom-width: 2px !important;
+			border-left-width: 2px !important;
+		}
+		
+		table#bottom, table#bottom td {
+			border-collapse: collapse;
+			border: 2px solid #000;
+			border-top: 0;
+			margin-top: 0;
+		}
+		#hr-only-cell {
+			vertical-align: top;
+			padding: 0;
+		}
+		div#hr-only {
+			font-family: Arial, sans-serif;
+			font-size: .9em;
+			font-weight: 600;
+			border-bottom: 1px solid #000;
+			text-align: center;
+			padding-bottom: 4px;
+		}
+		div#note {
+			font-size: .68em;
+		}
+		div#note2 {
+			padding-top: 7px;
+			padding-bottom: 5px;
+			padding-left: 7px;
+			font-size: .78em;
+		}
+		div#approvalSign, div#employeeSign {
+			font-size: .9em;
+			display: inline-block;
+		}
+		div#employeeSignLabel, div#approvalSignLabel {
+			display: inline-block;
+			width: 130px;
+			padding: 5px;
+		}
+		.sign-date-label {
+			margin-left: 2em;
+			display: inline-block
+		}
+		.signature, .sign-date {
+			margin-bottom: -5px;
+			display: inline-block;
+			border-bottom: 2px solid #000;
+			height: 1.5em;
+		}
+		.signature {
+			width: 320px;
+		}
+		.sign-date {
+			width: 150px;
+		}
+		.no-bottom-border {
+			border-bottom-color: #fff;
+			border-bottom: 0;
+		}
+		.no-bottom-border-top {
+			border-bottom-color: #fff;
+			border-bottom: 0;
+			border-top-color: #fff;
+			border-top: 0;
+		}
+		#absence-type-head {
+			font-family: Arial, sans-serif;
+			text-align: center;
+			vertical-align: top;
+			font-size: .9em;
+			font-weight: 500;
+		}
+		#absence-type {
+			vertical-align: top;
+		}
+		#absence-type ul {
+			list-style: none;
+			padding: 0;
+			margin: 0;
+		}
+		#absence-type li {
+			font-family: Arial, sans-serif;
+			font-size: .8em;
+			list-style: none;
+			padding: 0;
+		}
+	</style>
+</head>
+<body>
+	<div id="body-content">
+		<div>
+			<h1>State of Utah Bi-Weekly Time Sheet</h1>
+			<br />
+			<table id="head">
+				<tr>
+					<td>
+						<h2>NAME:</h2>
+					</td>
+					<td colspan="2">
+						<span>@person.FirstName @person.LastName</span>
+					</td>
+					<td>
+						<h2>EIN:</h2>
+						<span>@ein</span>
+					</td>
+					<td colspan="2">
+						<h2>PAY PERIOD END DATE:</h2>
+						<span>@payperiod.EndDate.ToString("MM/dd/yyyy")</span>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<h3>ORG:</h3>
+						<span></span>
+					</td>
+					<td>
+						<h3>DIST COD</h3>
+						<span></span>
+					</td>
+					<td>
+						<h3>WORK SCHEDULE:</h3>
+						<span></span>
+					</td>
+					<td>
+						<h3>FLSA:</h3>
+						<span></span>
+					</td>
+					<td>
+						<h3>WORK GROUP:</h3>
+						<span></span>
+					</td>
+					<td>
+						<h3>COMP/OT:</h3>
+						<span></span>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<table id="main">
+			<thead>
+				<tr>
+					<th class="shade">A/A TYPE</th>
+					@for (int i = 0; i <= payperiodspan.TotalDays; i++)
+					{
+						var week = i / 7;
+						var day = payperiod.StartDate.Date.AddDays(i);
+						var dayLabel = day.DayOfWeek.ToString();
+						var dayLabelCaps = dayLabel.Substring(0, 3).ToUpper();
+
+					<th class="eqWidth" title="@dayLabel">
+						@if (day.DayOfWeek == DayOfWeek.Saturday || day.DayOfWeek == DayOfWeek.Sunday)
+							{
+							<div class="shade" title="@dayLabel">
+								@dayLabelCaps
+							</div>
+							}
+							else
+							{
+							@dayLabelCaps
+							}
+					</th>
+
+					@if (day.DayOfWeek == lastDayOfWorkWeek)
+						{
+							var weekLabel = week + 1;
+							<th class="shade week-total-all eqWidth">WEEK @weekLabel TOTAL</th>
+						}
+
+					}
+					<th class="shade eqWidth">PERIOD TOTAL</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>WORKED *</td>
+					@for (int i = 0; i <= payperiodspan.TotalDays; i++)
+					{
+						var week = i / 7;
+						var day = payperiod.StartDate.Date.AddDays(i);
+						var anyHours = Model.Any(m => m.Key == day);
+
+						<td>
+							@if (anyHours)
+							{
+								@Model.First(d => d.Key == day).Sum(h => h.RoundedHours)
+							}
+						</td>
+
+
+						@if (day.DayOfWeek == lastDayOfWorkWeek)
+						{
+							var beginWeekDate = payperiod.StartDate.Date.AddDays(week * 7);
+							<td class="week-total-sides">
+								@Model.Where(d => beginWeekDate <= d.Key && d.Key <= day).Sum(d => d.Sum(h => h.RoundedHours))
+							</td>
+						}
+					}
+					<td>@Model.Sum(d => d.Sum(h => h.RoundedHours))</td>
+				</tr>
+				@for (int j = 0; j < 4; j++)
+				{
+					<tr>
+						<td></td>
+						@for (int i = 0; i <= payperiodspan.TotalDays; i++)
+						{
+							var week = i / 7;
+							var day = payperiod.StartDate.Date.AddDays(i);
+
+							<td>
+								&nbsp;
+							</td>
+
+
+							@if (day.DayOfWeek == lastDayOfWorkWeek)
+							{
+								<td class="week-total-sides"></td>
+							}
+						}
+						<td></td>
+					</tr>
+				}
+				@for (int j = 0; j < commonCodes.Count; j++)
+				{
+					var shade = j % 2 == 0 ? "shade" : "";
+					var commonCode = commonCodes.ElementAtOrDefault(j);
+					<tr>
+						<td class="@shade">@commonCode.Key - @commonCode.Value.ToUpper()</td>
+						@for (int i = 0; i <= payperiodspan.TotalDays; i++)
+						{
+							var week = i / 7;
+							var day = payperiod.StartDate.Date.AddDays(i);
+
+							<td class="@shade"></td>
+
+
+							@if (day.DayOfWeek == lastDayOfWorkWeek)
+							{
+								<td class="week-total-sides @shade"></td>
+							}
+						}
+						<td class="@shade"></td>
+					</tr>
+				}
+				<tr>
+					<td class="shade">DAILY TOTAL</td>
+					@for (int i = 0; i <= payperiodspan.TotalDays; i++)
+					{
+						var week = i / 7;
+						var day = payperiod.StartDate.Date.AddDays(i);
+						var anyHours = Model.Any(m => m.Key == day);
+
+						@if (i == 0)
+						{
+							<td class="week-total-top-bottom-left">
+								@if (anyHours)
+								{
+									@Model.First(d => d.Key == day).Sum(h => h.RoundedHours)
+								}
+							</td>
+						}
+						else
+						{
+							<td class="week-total-top-bottom">
+
+								@if (anyHours)
+								{
+									@Model.First(d => d.Key == day).Sum(h => h.RoundedHours)
+								}
+							</td>
+						}
+
+						@if (day.DayOfWeek == lastDayOfWorkWeek)
+						{
+							var beginWeekDate = payperiod.StartDate.Date.AddDays(week * 7);
+							<td class="week-total-all">
+								@Model.Where(d => beginWeekDate <= d.Key && d.Key <= day).Sum(d => d.Sum(h => h.RoundedHours))
+							</td>
+						}
+					}
+					<td class="">
+						@Model.Sum(d => d.Sum(h => h.RoundedHours))
+					</td>
+				</tr>
+				@for (int j = 0; j < otherCodes.Count; j++)
+			{
+				var otherCode = otherCodes.ElementAtOrDefault(j);
+					<tr>
+						<td>@otherCode.ToUpper()</td>
+						@for (int i = 0; i <= payperiodspan.TotalDays; i++)
+						{
+							var week = i / 7;
+							var day = payperiod.StartDate.Date.AddDays(i);
+
+							<td></td>
+
+
+							@if (day.DayOfWeek == lastDayOfWorkWeek)
+							{
+								<td class=""></td>
+							}
+						}
+						<td></td>
+					</tr>
+			}
+			</tbody>
+		</table>
+		<table id="bottom">
+			<tr>
+				<td colspan="5" id="approval">
+					<div>
+						<div id="note">
+							* Hours Worked are defined by Federal and State Law.  For further clarification, see State DHRM Rules for FLSA time reporting Requirements.
+						</div>
+						<div id="note2">
+							By signing this time sheet, I verify that the above reported hours worked and absences recorded are accurate for this pay period.
+						</div>
+						<div id="employeeSign">
+							<div id="employeeSignLabel">
+								Employee Signature:
+							</div>
+							<div class="signature">
+
+							</div>
+							<div class="sign-date-label">
+								Date:
+							</div>
+							<div class="sign-date">
+
+							</div>
+						</div>
+						<br />
+						<div id="approvalSign">
+							<div id="approvalSignLabel">
+								Approval:
+							</div>
+							<div class="signature">
+
+							</div>
+							<div class="sign-date-label">
+								Date:
+							</div>
+							<div class="sign-date">
+
+							</div>
+						</div>
+					</div>
+				</td>
+				<td id="hr-only-cell">
+					<div id="hr-only" class="shade">
+						HR USE ONLY
+					</div>
+				</td>
+			</tr>
+			<tr id="absence-type-head">
+				<td colspan="5" class="shade">
+					ABSENCE TYPES
+				</td>
+				<td class="no-bottom-border"></td>
+			</tr>
+			<tr id="absence-type">
+				<td>
+					<ul>
+						<li>A Annual Leave</li>
+						<li>AF Annual/FMLA</li>
+						<li>AS Annual/Sick Exh</li>
+						<li>C Comp Used</li>
+						<li>N LWOP-No Accrual</li>
+						<li>NA LWOP-Armed Svcs</li>
+					</ul>
+				</td>
+				<td>
+					<ul>
+						<li>NF LWOP-Family/Med</li>
+						<li>NM LWOP-Medical</li>
+						<li>OA Other-Admin</li>
+						<li>OD Other-Disaster</li>
+						<li>OE - Other-Emergency</li>
+						<li>OJ Other-Jury Duty</li>
+					</ul>
+				</td>
+				<td>
+					<ul>
+						<li>OM Other-Military</li>
+						<li>OO Other-Organ</li>
+						<li>OP Other-Protected</li>
+						<li>OR Other-Reward</li>
+						<li>OS Other-Student</li>
+						<li>S Sick</li>
+					</ul>
+				</td>
+				<td>
+					<ul>
+						<li>SD Sick/Dependent</li>
+						<li>SF Sick/FMLA</li>
+						<li>SI Sick/Industrial</li>
+						<li>V Converted Sick</li>
+						<li>VF Conv. Sick/FMLA</li>
+						<li>X Excess</li>
+					</ul>
+				</td>
+				<td>
+					<ul>
+						<li>XF Excess/FMLA</li>
+						<li>Y LWOP-With Accrual</li>
+						<li>YF LWOP-Furlough</li>
+						<li>YI LWOP-Industrial</li>
+					</ul>
+				</td>
+				<td class="no-bottom-border-top"></td>
+			</tr>
+		</table>
+	</div>
+</body>
+</html>

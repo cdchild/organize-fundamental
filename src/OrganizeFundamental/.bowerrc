@@ -1,0 +1,4 @@
+{
+    "directory": "wwwroot/lib",
+    "registry": "https://nuget.usoe-dcs.org/bower/client-packages"
+}
